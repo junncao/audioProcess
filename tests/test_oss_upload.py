@@ -39,7 +39,7 @@ def main():
     logger.info(f"开始测试上传文件到OSS: {args.file}")
     
     # 调用上传函数 - 直接使用主脚本中的函数
-    oss_url = upload_file_to_oss(args.file)
+    oss_url, object_name = upload_file_to_oss(args.file)
     
     if oss_url:
         # 打印结果

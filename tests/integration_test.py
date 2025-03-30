@@ -99,7 +99,7 @@ def main_function():
     if not args.skip_upload and audio_file and not oss_url:
         logger.info(f"开始将音频文件上传到OSS: {audio_file}")
         # 直接使用main.py中的upload_file_to_oss函数
-        oss_url = main.upload_file_to_oss(audio_file)
+        oss_url, object_name = main.upload_file_to_oss(audio_file)
         if not oss_url:
             logger.error("OSS上传失败，退出测试")
             return 1

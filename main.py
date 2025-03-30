@@ -180,7 +180,7 @@ def upload_file_to_oss(file_path):
     """
     if not os.path.exists(file_path):
         logger.error(f"文件不存在: {file_path}")
-        return None
+        return None, None
         
     try:
         # 获取阿里云凭证 - 首先尝试使用环境变量，如果不存在则使用代码中定义的密钥
@@ -228,14 +228,14 @@ def upload_file_to_oss(file_path):
             public_url = f"https://{OSS_BUCKET_NAME}.{OSS_ENDPOINT.replace('https://', '')}/{object_name}"
             logger.info(f"公共 URL (需要适当的存储桶权限才能访问): {public_url}")
             
-            return file_url
+            return file_url, object_name
         else:
             logger.error(f"文件上传失败，状态码: {result.status}")
-            return None
+            return None, None
             
     except Exception as e:
         logger.error(f"上传文件到 OSS 时出错: {str(e)}")
-        return None
+        return None, None
 
 def download_json(url):
     """
@@ -767,6 +767,51 @@ def extract_youtube_subtitles(url, proxy=None):
         logger.error(f"提取字幕时出错: {str(e)}")
         return None
 
+
+def delete_file_from_oss(object_name):
+    """
+    从阿里云OSS删除文件
+
+    参数:
+        file_url: OSS文件URL
+
+    返回:
+        bool: 删除是否成功
+    """
+    try:
+        logger.info(f"开始从OSS删除文件: {object_name}")
+
+        # 创建OSS客户端
+        if 'OSS_ACCESS_KEY_ID' in os.environ and 'OSS_ACCESS_KEY_SECRET' in os.environ:
+            auth = oss2.ProviderAuthV4(EnvironmentVariableCredentialsProvider())
+        else:
+            auth = oss2.Auth(OSS_ACCESS_KEY_ID, OSS_ACCESS_KEY_SECRET)
+
+        # 创建Bucket对象
+        bucket = oss2.Bucket(auth, OSS_ENDPOINT, OSS_BUCKET_NAME, region=OSS_REGION)
+
+        # 检查文件是否存在
+        if not bucket.object_exists(object_name):
+            logger.error(f"OSS文件不存在: {object_name}")
+            return False
+
+        # 删除文件
+        response = bucket.delete_object(object_name)
+
+        if response.status == HTTPStatus.NO_CONTENT:  # 204
+            logger.info(f"文件删除成功: {object_name}")
+            return True
+        else:
+            logger.error(f"文件删除失败，状态码: {response.status}")
+            return False
+
+    except oss2.exceptions.OssError as e:
+        logger.error(f"OSS操作错误: {str(e)}")
+        return False
+    except Exception as e:
+        logger.error(f"删除OSS文件时出错: {str(e)}")
+        return False
+
 def main():
     """主函数"""
     # 解析命令行参数
@@ -867,7 +912,7 @@ def main():
     if args.oss_url:
         logger.info(f"直接使用 OSS URL 进行语音识别测试: {args.oss_url}")
         result = transcribe_audio(args.oss_url, skip_summary=args.skip_summary)
-        
+
         if 'error' in result:
             logger.error(f"音频转录失败: {result['error']}")
             return 1
@@ -961,7 +1006,7 @@ def main():
         return 1
     
     # 2. 将音频文件上传到阿里云 OSS
-    oss_url = upload_file_to_oss(audio_file)
+    oss_url, object_name = upload_file_to_oss(audio_file)
     if not oss_url:
         logger.error("文件上传到 OSS 失败，程序退出")
         return 1
@@ -969,7 +1014,12 @@ def main():
     # 3. 转录音频文件（除非指定跳过）
     if not args.skip_transcribe:
         result = transcribe_audio(oss_url, skip_summary=args.skip_summary)
-        
+        # 转录完成后删除OSS文件
+        if delete_file_from_oss(object_name):
+            logger.info("已清理OSS临时文件")
+        else:
+            logger.warning("OSS临时文件清理失败")
+
         if 'error' in result:
             logger.error(f"音频转录失败: {result['error']}")
             return 1
