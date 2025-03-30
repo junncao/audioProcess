@@ -1,157 +1,165 @@
-# AudioProcess
+# YouTube视频处理助手
 
-一个用于从YouTube下载音频，提取字幕或转录音频内容，并进行文本摘要的工具包
+一个功能丰富的Telegram机器人，可以处理YouTube视频，提取字幕，生成摘要，下载音频，以及进行AI对话。
 
 ## 功能特点
 
-- **YouTube字幕提取**：优先尝试提取YouTube视频的字幕内容
-- **音频下载和转录**：如果视频没有字幕，自动下载音频并转录
-- **文本摘要生成**：对提取的字幕或转录内容进行摘要总结
-- **多种输入支持**：支持YouTube URL、OSS音频URL或直接文本输入
-- **模块化设计**：代码结构清晰，易于维护和扩展
-- **代理管理**：内置代理管理功能，便于在不同网络环境下使用
+### 📝 字幕摘要功能
+- 自动提取YouTube视频字幕（优先中文，其次英文）
+- 若无字幕，自动下载音频并通过阿里云语音识别服务转录
+- 使用大语言模型对字幕或转录内容生成摘要
+- 发送摘要内容和完整结果文件
 
-## 安装
+### 🎵 音频下载功能
+- 从YouTube视频中提取高质量WebM音频
+- 直接将音频文件发送至Telegram
 
-### 方法一：直接使用
+### 🤖 AI对话功能
+- 与阿里云大模型进行自然语言对话
+- 保持对话上下文，实现连续交流
+- 自动避免代理问题，确保稳定连接
 
+### 其他特性
+- 实时显示处理日志，让你了解处理进度
+- 支持用户权限控制，可限制特定用户使用
+- 三种便捷的交互方式：
+  - Telegram命令菜单（聊天框左侧）
+  - 自定义键盘按钮（聊天框底部）
+  - 直接发送YouTube链接
+
+## 安装设置
+
+### 前提条件
+
+1. Python 3.6+
+2. Telegram机器人Token（可从[@BotFather](https://t.me/BotFather)获取）
+3. 你的Telegram用户ID（可从[@userinfobot](https://t.me/userinfobot)获取）
+4. 阿里云账号（用于DashScope API和OSS服务）
+
+### 安装步骤
+
+1. 克隆或下载本项目
+
+2. 安装依赖：
 ```bash
-# 克隆仓库
-git clone <仓库地址>
-cd audioprocess
-
-# 安装依赖
+# 安装基本依赖
 pip install -r requirements.txt
+
+# 安装Telegram机器人依赖
+pip install python-telegram-bot==13.15
 ```
 
-### 方法二：作为包安装
-
+3. 设置配置：
 ```bash
-# 克隆仓库
-git clone <仓库地址>
-cd audioprocess
-
-# 安装为包
-pip install -e .
+# 运行Telegram机器人设置脚本
+python -m audioprocess.scripts.setup_telegram_bot
 ```
+按照提示输入你的Telegram Bot Token和允许使用的用户ID。
 
-## 配置
-
-在使用前，需要配置以下环境变量或修改`audioprocess/config/settings.py`文件：
-
-```bash
-# 阿里云OSS配置
-export OSS_ACCESS_KEY_ID="你的OSS_ACCESS_KEY_ID"
-export OSS_ACCESS_KEY_SECRET="你的OSS_ACCESS_KEY_SECRET"
-
-# 阿里云DashScope配置
-export DASHSCOPE_API_KEY="你的DASHSCOPE_API_KEY"
-```
+4. 设置阿里云服务：
+   - 在`audioprocess/config/settings.py`中配置OSS和DashScope相关参数
+   - 确保`DASHSCOPE_API_KEY`、`OSS_ACCESS_KEY_ID`和`OSS_ACCESS_KEY_SECRET`已正确设置
 
 ## 使用方法
 
-### 1. 处理YouTube视频
+### 启动机器人
+
+有多种方式可以启动机器人：
 
 ```bash
-# 从YouTube视频中提取字幕或下载音频并转录，然后生成摘要
-python run.py --url "https://www.youtube.com/watch?v=视频ID"
+# 方式1：从项目根目录启动
+python telegram_bot.py
 
-# 强制使用音频下载和转录流程，跳过字幕提取
-python run.py --url "https://www.youtube.com/watch?v=视频ID" --force-audio
+# 方式2：使用模块启动
+python -m audioprocess.scripts.telegram_bot
 
-# 跳过摘要生成步骤
-python run.py --url "https://www.youtube.com/watch?v=视频ID" --skip-summary
+# 方式3：使用脚本启动（Mac/Linux）
+./audioprocess/scripts/start_telegram_bot.sh
 
-# 使用代理
-python run.py --url "https://www.youtube.com/watch?v=视频ID" --youtube-proxy "http://127.0.0.1:7890"
+# 方式3：使用脚本启动（Windows）
+audioprocess\scripts\start_telegram_bot.bat
 ```
 
-### 2. 直接处理OSS音频URL
+### 使用机器人
+
+1. 在Telegram中打开你的机器人对话
+2. 使用下方的按钮菜单或左侧命令菜单选择功能：
+   - 📝 **字幕摘要**：`/summary` - 提取字幕并生成摘要
+   - 🎵 **音频下载**：`/download` - 下载音频文件
+   - 🤖 **AI对话**：`/chat` - 与AI模型对话
+3. 或直接发送YouTube链接（默认使用字幕摘要功能）
+
+#### 字幕摘要模式
+1. 选择字幕摘要功能或直接发送YouTube链接
+2. 机器人会显示处理进度和日志
+3. 完成后，你将收到：
+   - 字幕或转录文本的摘要
+   - 包含完整内容的文件
+
+#### 音频下载模式
+1. 选择音频下载功能
+2. 发送YouTube链接
+3. 机器人会下载并发送音频文件
+
+#### AI对话模式
+1. 选择AI对话功能
+2. 直接发送消息，与阿里云大模型对话
+3. 使用`/exit`退出对话模式
+
+## 配置选项
+
+主要配置文件位于`audioprocess/config/settings.py`，包含以下选项：
+
+### Telegram相关
+- `TELEGRAM_BOT_TOKEN`: 机器人的API Token
+- `TELEGRAM_ALLOWED_USERS`: 允许使用机器人的用户ID列表
+
+### 阿里云相关
+- `OSS_ENDPOINT`, `OSS_REGION`, `OSS_BUCKET_NAME`: OSS存储配置
+- `OSS_ACCESS_KEY_ID`, `OSS_ACCESS_KEY_SECRET`: OSS访问凭证
+- `DASHSCOPE_API_KEY`: 阿里云DashScope API密钥
+
+### 路径相关
+- `RESULTS_DIR`: 结果保存目录
+- `TEMP_DIR`: 临时文件目录
+- `DOWNLOADS_DIR`: 下载文件目录
+
+## 代理管理
+
+机器人采用智能代理管理策略，确保各功能正常工作：
+
+- **YouTube下载**：使用系统代理，确保能访问YouTube
+- **阿里云API调用**：禁用代理，避免SOCKS代理错误
+- **Telegram通信**：自动管理代理设置
+
+## 故障排除
+
+### 问题：无法启动机器人
+- 检查`TELEGRAM_BOT_TOKEN`是否正确设置
+- 确认python-telegram-bot版本为13.x
+- 检查网络连接
+
+### 问题：字幕提取或转录失败
+- 检查阿里云DashScope API密钥是否有效
+- 确认OSS配置正确
+- 验证YouTube链接有效性
+
+### 问题："Using SOCKS proxy"错误
+- 此问题已自动处理，代码会禁用AI对话和文件发送时的代理
+
+### 问题：没有收到结果文件
+- 检查文件大小是否超过Telegram限制
+- 查看日志中的错误信息
+- 检查`RESULTS_DIR`目录中是否有生成的文件
+
+## 清理空目录
+
+使用以下命令清理项目中的空目录：
 
 ```bash
-# 使用OSS音频URL进行转录和摘要
-python run.py --oss-url "https://你的存储桶.oss-cn-shanghai.aliyuncs.com/你的音频文件.mp3"
+python cleanup_empty_dirs.py
 ```
 
-### 3. 直接生成文本摘要
+## 贡献和支持
 
-```bash
-# 从命令行输入文本进行摘要
-python run.py --text "需要摘要的文本内容"
-
-# 从文件读取文本进行摘要
-python run.py --text-file 文本文件路径.txt
-```
-
-### 4. 禁用代理
-
-```bash
-# 禁用所有代理设置
-python run.py --url "https://www.youtube.com/watch?v=视频ID" --no-proxy
-```
-
-## 测试模块
-
-在`tests`目录下提供了各个功能的独立测试脚本：
-
-```bash
-# 测试字幕提取功能
-python tests/test_extract_subtitle.py --url "https://www.youtube.com/watch?v=视频ID"
-
-# 测试YouTube音频下载功能
-python tests/test_youtube_download.py --url "https://www.youtube.com/watch?v=视频ID"
-
-# 测试OSS上传功能
-python tests/test_oss_upload.py --file 本地音频文件路径
-
-# 测试音频转录功能
-python tests/test_transcribe.py --url 音频文件URL
-
-# 测试文本摘要功能
-python tests/test_summarize.py --text "需要摘要的文本内容"
-```
-
-## 目录结构
-
-```
-audioprocess/
-├── audioprocess/
-│   ├── __init__.py
-│   ├── main.py              # 主程序文件
-│   │   └── __init__.py
-│   ├── config/              # 配置模块
-│   │   ├── __init__.py
-│   │   └── settings.py      # 配置项
-│   ├── core/                # 核心功能模块
-│   │   ├── __init__.py
-│   │   ├── youtube_downloader.py  # YouTube音频下载
-│   │   ├── subtitle_extractor.py  # 字幕提取
-│   │   ├── oss_uploader.py        # OSS上传
-│   │   ├── transcription.py       # 音频转录
-│   │   └── summarization.py       # 文本摘要
-│   └── utils/               # 工具模块
-│       ├── __init__.py
-│       ├── logger.py        # 日志工具
-│       ├── proxy_manager.py # 代理管理
-│       └── file_utils.py    # 文件处理工具
-├── tests/                   # 测试模块
-│   ├── test_youtube_download.py
-│   ├── test_oss_upload.py
-│   ├── test_transcribe.py
-│   └── test_summarize.py
-├── run.py                   # 入口点脚本
-├── setup.py                 # 安装配置
-└── README.md                # 说明文档
-```
-
-## 注意事项
-
-1. 确保有足够的网络连接速度，以便下载YouTube视频。
-2. 阿里云OSS和DashScope API需要有效的账户和密钥。
-3. 某些地区访问YouTube可能需要使用代理。
-4. 音频转录和摘要生成可能需要一定的处理时间。
-5. 如果使用SOCKS代理，请确保安装了`httpx[socks]`：`pip install httpx[socks]`。
-
-## 许可证
-
-[MIT](LICENSE) 
+欢迎提交Issue和Pull Request。如有使用问题，请提供详细的错误日志和复现步骤。 
