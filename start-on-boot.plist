@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.youtube.telegrambot.starter</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>cd /Users/YOUR_USERNAME/path/to/youtube-telegram-bot && ./restart-bot.sh</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/Library/Logs/youtube-telegram-bot.log</string>
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/Library/Logs/youtube-telegram-bot.log</string>
+</dict>
+</plist> 
