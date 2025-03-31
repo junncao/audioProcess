@@ -1,15 +1,94 @@
 #!/usr/bin/env python3
 """
 代理管理工具
------------
-管理代理设置和环境变量
+----------
+提供禁用和恢复代理设置的功能
 """
 
 import os
+import logging
 import contextlib
-from audioprocess.utils.logger import get_logger
 
-logger = get_logger(__name__)
+# 配置日志
+logger = logging.getLogger(__name__)
+
+def disable_proxies():
+    """
+    禁用所有代理设置
+    
+    返回:
+        dict: 原始代理设置，用于后续恢复
+    """
+    # 保存原始代理设置
+    original_proxies = {}
+    proxy_vars = [
+        'HTTP_PROXY', 'http_proxy', 
+        'HTTPS_PROXY', 'https_proxy', 
+        'ALL_PROXY', 'all_proxy',
+        'NO_PROXY', 'no_proxy'
+    ]
+    
+    for var in proxy_vars:
+        if var in os.environ:
+            original_proxies[var] = os.environ[var]
+    
+    # 禁用所有代理
+    for var in proxy_vars:
+        if var in os.environ and var.lower() not in ['no_proxy', 'no_proxy']:
+            del os.environ[var]
+    
+    # 设置NO_PROXY为*，明确禁用所有代理
+    os.environ['NO_PROXY'] = '*'
+    os.environ['no_proxy'] = '*'
+    
+    logger.info("已禁用所有代理设置")
+    
+    return original_proxies
+
+def restore_proxies(original_proxies):
+    """
+    恢复之前保存的代理设置
+    
+    参数:
+        original_proxies: 之前保存的原始代理设置
+    """
+    if not original_proxies:
+        logger.info("没有原始代理设置需要恢复")
+        return
+    
+    # 清除当前的NO_PROXY设置
+    if 'NO_PROXY' in os.environ:
+        del os.environ['NO_PROXY']
+    if 'no_proxy' in os.environ:
+        del os.environ['no_proxy']
+    
+    # 恢复原始代理设置
+    for var, value in original_proxies.items():
+        os.environ[var] = value
+    
+    logger.info("已恢复原始代理设置")
+
+def disable_all_proxies():
+    """
+    完全禁用所有代理设置，不保留原始设置（用于CLI命令）
+    """
+    proxy_vars = [
+        'HTTP_PROXY', 'http_proxy', 
+        'HTTPS_PROXY', 'https_proxy', 
+        'ALL_PROXY', 'all_proxy',
+        'FTP_PROXY', 'ftp_proxy'
+    ]
+    
+    # 移除所有代理环境变量
+    for var in proxy_vars:
+        if var in os.environ:
+            del os.environ[var]
+    
+    # 设置NO_PROXY为*，明确禁用所有代理
+    os.environ['NO_PROXY'] = '*'
+    os.environ['no_proxy'] = '*'
+    
+    logger.info("已永久禁用所有代理设置")
 
 def check_socks_dependency():
     """
@@ -64,21 +143,6 @@ def get_http_proxy(custom_proxy=None):
     # 使用默认代理
     logger.info(f"未找到系统代理，使用默认代理: {DEFAULT_PROXY}")
     return DEFAULT_PROXY
-
-def disable_all_proxies():
-    """
-    禁用所有代理设置
-    """
-    logger.info("禁用所有代理设置")
-    
-    # 清除所有代理环境变量
-    for var in ['HTTP_PROXY', 'http_proxy', 'HTTPS_PROXY', 'https_proxy', 'ALL_PROXY', 'all_proxy']:
-        if var in os.environ:
-            del os.environ[var]
-    
-    # 设置NO_PROXY环境变量
-    os.environ['NO_PROXY'] = '*'
-    os.environ['no_proxy'] = '*'
 
 @contextlib.contextmanager
 def no_proxy_context():
