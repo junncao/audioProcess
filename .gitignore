@@ -54,3 +54,5 @@ Thumbs.db
 # 临时文件
 tmp/
 temp/ 
+/bot_pids.txt
+/terminal_logs.txt
