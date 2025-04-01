@@ -234,6 +234,7 @@ def download_audio_in_thread(update: Update, context: CallbackContext, youtube_u
         logger.info(f"下载完成: {audio_file}")
         logger.info(f"文件大小: {os.path.getsize(audio_file)/1024/1024:.2f} MB")
         
+        
         # 在发送文件前禁用代理
         original_proxies = disable_proxies()
         
@@ -242,11 +243,15 @@ def download_audio_in_thread(update: Update, context: CallbackContext, youtube_u
             logger.info(f"开始发送音频文件: {audio_file}")
             with open(audio_file, 'rb') as audio:
                 status_message.edit_text("✅ 下载完成，正在发送音频文件...")
-                context.bot.send_document(
+                # 使用send_audio而不是send_document以启用内嵌播放器
+                audio_filename = os.path.basename(audio_file)
+                title = os.path.splitext(audio_filename)[0]  # 从文件名提取标题（不含扩展名）
+                context.bot.send_audio(
                     chat_id=chat_id,
-                    document=audio,
-                    filename=os.path.basename(audio_file),
-                    caption=f"🎵 已下载音频: {os.path.basename(audio_file)}"
+                    audio=audio,
+                    title=title,
+                    filename=audio_filename,
+                    caption=f"🎵 已下载音频: {audio_filename}"
                 )
             logger.info(f"音频文件发送成功: {audio_file}")
             status_message.edit_text("✅ 音频文件已发送。")

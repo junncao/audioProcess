@@ -6,7 +6,6 @@ export PYTHONPATH=$(pwd)
 
 # 创建日志目录
 mkdir -p logs
-export $(grep -v '^#' .env | xargs)
 # 记录启动时间
 echo "=== 机器人启动于 $(date) ===" > terminal_logs.txt
 
